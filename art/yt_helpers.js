@@ -3,8 +3,9 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms)); const vis=e=>e&&e.getClientRec
 window.__sleep=sleep; window.__vis=vis;
 window.__fetchR=async(u)=>{for(let i=0;i<8;i++){try{const r=await fetch(u); if(r.ok) return r;}catch(e){} await sleep(15000);} throw new Error('fetch failed '+u);};
 window.__closePopups=async()=>{ for(const dl of [...document.querySelectorAll('tp-yt-paper-dialog, ytcp-dialog')].filter(e=>vis(e)&&/Проверка видео ещё продолжается/.test(e.innerText))){ dl.querySelector('#primary-action-button button, #primary-action-button')?.click(); await sleep(1200);} for(const b of [...document.querySelectorAll('button')].filter(b=>vis(b)&&/^(Закрыть|Не сейчас)$/.test(b.innerText.trim()))) { b.click(); await sleep(600);} };
-window.__fill=async function(d,o){
- let boxes=[]; for(let k=0;k<20;k++){ boxes=[...d.querySelectorAll('#textbox[contenteditable]')]; if(boxes.length>=2) break; await sleep(1000);} if(boxes.length<2) return {err:'no textboxes'};
+window.__dlg=function(){ const b=[...document.querySelectorAll('#textbox[contenteditable], #done-button, #next-button')].find(vis); if(!b) return document.querySelector('ytcp-uploads-dialog'); let e=b; while(e&&e.parentElement&&!(e.querySelector('#next-button')&&e.querySelector('#done-button'))) e=e.parentElement; return e||document; };
+window.__fill=async function(d,o){ d=document;
+ let boxes=[]; for(let k=0;k<20;k++){ boxes=[...document.querySelectorAll('#textbox[contenteditable]')].filter(vis); if(boxes.length>=2) break; await sleep(1000);} if(boxes.length<2) return {err:'no textboxes'};
  async function setBox(el,txt){el.focus();const r=document.createRange();r.selectNodeContents(el);const s=getSelection();s.removeAllRanges();s.addRange(r);document.execCommand('insertText',false,txt);await sleep(400);}
  await setBox(boxes[0],o.title); await setBox(boxes[1],o.desc);
  if(o.thumb){const fl=d.querySelector('#file-loader'); if(fl){const t=new DataTransfer(); t.items.add(o.thumb); fl.files=t.files; fl.dispatchEvent(new Event('change',{bubbles:true})); await sleep(1500);}}
@@ -25,9 +26,9 @@ window.__upA=async function(o){
  let inp; for(let k=0;k<15&&!(inp=document.querySelector('ytcp-uploads-file-picker input[type=file]'));k++) await sleep(1000);
  if(!inp) return {err:'no file input'};
  const dt=new DataTransfer(); dt.items.add(file); inp.files=dt.files; inp.dispatchEvent(new Event('change',{bubbles:true}));
- let d; for(let k=0;k<30;k++){ await sleep(1000); d=document.querySelector('ytcp-uploads-dialog'); if(d&&/Загрузка недоступна/.test(d.innerText)) return 'BLOCKED'; if(d&&d.querySelectorAll('#textbox[contenteditable]').length>=2) break; }
- await sleep(1500); return await __fill(d,o);};
-window.__sched=async function(dateStr,timeStr,go){ const d=document.querySelector('ytcp-uploads-dialog');
+ for(let k=0;k<30;k++){ await sleep(1000); if(/Загрузка недоступна/.test(document.body.innerText)) return 'BLOCKED'; if([...document.querySelectorAll('#textbox[contenteditable]')].filter(vis).length>=2) break; }
+ await sleep(1500); return await __fill(document,o);};
+window.__sched=async function(dateStr,timeStr,go){ const d=__dlg();
  for(let k=0;k<3&&![...d.querySelectorAll('input')].some(i=>vis(i)&&/^\d\d:\d\d$/.test(i.value));k++){ (d.querySelector('#second-container-expand-button')||d.querySelector('#schedule-radio-button'))?.click(); await sleep(2500); }
  const dv=()=>[...document.querySelectorAll('input')].find(i=>vis(i)&&/\d{4}\sг/.test(i.value));
  const trig=d.querySelector('#datepicker-trigger'); const want=dateStr.split(' ').slice(0,2).join(' ');
@@ -40,8 +41,8 @@ window.__sched=async function(dateStr,timeStr,go){ const d=document.querySelecto
  const res={date:norm(trig.innerText), time:ti.value};
  if(!(go && res.date.startsWith(want) && res.time===timeStr)) return res;
  for(let k=0;k<20;k++){ const b=d.querySelector('#done-button'); if(b && !b.hasAttribute('disabled')){ b.click(); await sleep(3000); for(const dl of [...document.querySelectorAll('tp-yt-paper-dialog, ytcp-dialog')].filter(e=>vis(e)&&/Проверка видео ещё продолжается/.test(e.innerText))){ dl.querySelector('#primary-action-button button, #primary-action-button')?.click(); await sleep(2500);}
-   const ok=[...document.querySelectorAll('tp-yt-paper-dialog, ytcp-dialog')].some(e=>vis(e)&&/Публикация видео запланирована|Обработка видео/.test(e.innerText)) || !vis(d); if(ok){ res.done=true; return res;} } await sleep(3000);} res.err='done not confirmed'; return res;};
-window.__public=async function(){ const d=document.querySelector('ytcp-uploads-dialog'); const pub=d.querySelector('tp-yt-paper-radio-button[name=PUBLIC]'); if(!vis(pub)){ (d.querySelector('#first-container-expand-button'))?.click(); await sleep(1500);} d.querySelector('tp-yt-paper-radio-button[name=PUBLIC]')?.click(); await sleep(800);
+   const ok=[...document.querySelectorAll('tp-yt-paper-dialog, ytcp-dialog')].some(e=>vis(e)&&/Публикация видео запланирована|Обработка видео/.test(e.innerText)) || !vis(d) || !document.querySelector('#done-button') ; if(ok){ res.done=true; return res;} } await sleep(3000);} res.err='done not confirmed'; return res;};
+window.__public=async function(){ const d=__dlg(); const pub=d.querySelector('tp-yt-paper-radio-button[name=PUBLIC]'); if(!vis(pub)){ (d.querySelector('#first-container-expand-button'))?.click(); await sleep(1500);} d.querySelector('tp-yt-paper-radio-button[name=PUBLIC]')?.click(); await sleep(800);
  for(let k=0;k<20;k++){ const b=d.querySelector('#done-button'); if(b&&!b.hasAttribute('disabled')){ b.click(); await sleep(3000); for(const dl of [...document.querySelectorAll('tp-yt-paper-dialog, ytcp-dialog')].filter(e=>vis(e)&&/Проверка видео ещё продолжается/.test(e.innerText))){ dl.querySelector('#primary-action-button button, #primary-action-button')?.click(); await sleep(2500);} return true;} await sleep(3000);} return false;};
 // one item from a queue, after a fresh load of ...?d=ud
 window.__doItem=async function(qurl,idx){ window.__item={idx,stage:'start'}; try{
