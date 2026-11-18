@@ -1,0 +1,11 @@
+(function(){
+const k=()=>793/innerWidth;
+window.__rc=el=>{el.scrollIntoView({block:'center'}); const r=el.getBoundingClientRect(); return [Math.round((r.x+r.width/2)*k()),Math.round((r.y+r.height/2)*k())];};
+window.__dt=()=>__rc(document.querySelector('#datepicker-trigger'));
+window.__ti=()=>__rc([...document.querySelectorAll('input')].find(i=>i.getClientRects().length&&/^\d\d:\d\d$/.test(i.value)));
+window.__dayN=(n)=>{const all=[...document.querySelectorAll('ytcp-scrollable-calendar .calendar-day')]; const i=all.findIndex(e=>/selected/.test(e.className)); let best=-1,bd=1e9; all.forEach((e,j)=>{ if(e.textContent.trim()===String(n)&&!/invisible|disabled/.test(e.className)&&Math.abs(j-i)<bd){bd=Math.abs(j-i);best=j;} }); return __rc(all[best]);};
+window.__fin=async()=>{const sl=ms=>new Promise(r=>setTimeout(r,ms)); const it=[...document.querySelectorAll('tp-yt-paper-item')].find(e=>e.getClientRects().length&&e.innerText.trim()===__sh.o.t); it?.scrollIntoView({block:'center'}); it?.click(); await sl(1000); const ti=[...document.querySelectorAll('input')].find(i=>i.getClientRects().length&&/^\d\d:\d\d$/.test(i.value)); const dt=document.querySelector('#datepicker-trigger').innerText.trim(); const ok=ti?.value===__sh.o.t && dt.startsWith(__sh.o.d.split(' ').slice(0,2).join(' ')); if(ok){ document.querySelector('#done-button').click(); await sl(4000); for(const dl of [...document.querySelectorAll('tp-yt-paper-dialog, ytcp-dialog')].filter(e=>e.getClientRects().length&&/Проверка видео ещё продолжается/.test(e.innerText))){ dl.querySelector('#primary-action-button button, #primary-action-button')?.click(); await sl(3000);} } return [__sh.o.f, dt, ti?.value, ok, /Публикация видео запланирована|Обработка видео|Загрузка видео/.test(document.body.innerText)];};
+window.__prep2=async(IDX,J)=>{const q=await (await fetch(J+'shorts/queue_sh30.json')).json(); const o=q[IDX]; o.url=J+'shorts/'+o.fname;
+ window.__sh={o:{d:o.date,t:o.time,f:o.fname}}; try{__sh.a=await __upA(o);}catch(e){} await new Promise(r=>setTimeout(r,800));
+ if(/Загрузка недоступна/.test(document.body.innerText)) return 'BLOCKED'; return [o.fname,o.date,o.time, __rc(document.querySelector('#second-container-expand-button'))];};
+})();
